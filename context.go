@@ -9,7 +9,9 @@ import (
 	"net/http"
 )
 
-func contextGet(r *http.Request, key string) (interface{}, error) {
+type contextKey string
+
+func contextGet(r *http.Request, key contextKey) (interface{}, error) {
 	val := r.Context().Value(key)
 	if val == nil {
 		return nil, fmt.Errorf("no value exists in the context for key %q", key)
@@ -17,7 +19,7 @@ func contextGet(r *http.Request, key string) (interface{}, error) {
 	return val, nil
 }
 
-func contextSave(r *http.Request, key string, val interface{}) *http.Request {
+func contextSave(r *http.Request, key contextKey, val interface{}) *http.Request {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, key, val)
 	return r.WithContext(ctx)

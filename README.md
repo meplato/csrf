@@ -1,17 +1,14 @@
-# gorilla/csrf
+# meplato/csrf
 
-[![GoDoc](https://godoc.org/github.com/gorilla/csrf?status.svg)](https://godoc.org/github.com/gorilla/csrf)
-[![Sourcegraph](https://sourcegraph.com/github.com/gorilla/csrf/-/badge.svg)](https://sourcegraph.com/github.com/gorilla/csrf?badge)
-[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
-[![CircleCI](https://circleci.com/gh/gorilla/csrf.svg?style=svg)](https://circleci.com/gh/gorilla/csrf)
+[![GoDoc](https://godoc.org/github.com/meplato/csrf?status.svg)](https://godoc.org/github.com/meplato/csrf)
 
 ---
 
-**The Gorilla project has been archived, and is no longer under active maintainenance. You can read more here: https://github.com/gorilla#gorilla-toolkit**
+**This is a fork of the Gorilla CSRF package ([github.com/gorilla/csrf](https://github.com/gorilla/csrf)). The original Gorilla package was archived in late 2022. We adopted the package for our purposes.**
 
 ---
 
-gorilla/csrf is a HTTP middleware library that provides [cross-site request
+meplato/csrf is a HTTP middleware library that provides [cross-site request
 forgery](http://blog.codinghorror.com/preventing-csrf-and-xsrf-attacks/) (CSRF)
 protection. It includes:
 
@@ -23,7 +20,7 @@ protection. It includes:
   templates to replace a `{{ .csrfField }}` template tag with a hidden input
   field.
 
-gorilla/csrf is designed to work with any Go web framework, including:
+meplato/csrf is designed to work with any Go web framework, including:
 
 - The [Gorilla](https://www.gorillatoolkit.org/) toolkit
 - Go's built-in [net/http](http://golang.org/pkg/net/http/) package
@@ -32,38 +29,48 @@ gorilla/csrf is designed to work with any Go web framework, including:
 - [Echo](https://github.com/labstack/echo)
 - ... and any other router/framework that rallies around Go's `http.Handler` interface.
 
-gorilla/csrf is also compatible with middleware 'helper' libraries like
+meplato/csrf is also compatible with middleware 'helper' libraries like
 [Alice](https://github.com/justinas/alice) and [Negroni](https://github.com/codegangsta/negroni).
 
 ## Contents
 
-  * [Install](#install)
-  * [Examples](#examples)
-    + [HTML Forms](#html-forms)
-    + [JavaScript Applications](#javascript-applications)
-    + [Google App Engine](#google-app-engine)
-    + [Setting SameSite](#setting-samesite)
-    + [Setting Options](#setting-options)
-  * [Design Notes](#design-notes)
-  * [License](#license)
+- [meplato/csrf](#meplatocsrf)
+  - [Contents](#contents)
+  - [Install](#install)
+  - [Examples](#examples)
+    - [HTML Forms](#html-forms)
+    - [JavaScript Applications](#javascript-applications)
+    - [Google App Engine](#google-app-engine)
+    - [Setting SameSite](#setting-samesite)
+    - [Cookie path](#cookie-path)
+    - [Setting Options](#setting-options)
+  - [Design Notes](#design-notes)
+  - [License](#license)
 
 ## Install
 
 With a properly configured Go toolchain:
 
 ```sh
-go get github.com/gorilla/csrf
+go get github.com/meplato/csrf
 ```
 
 ## Examples
 
-- [HTML Forms](#html-forms)
-- [JavaScript Apps](#javascript-applications)
-- [Google App Engine](#google-app-engine)
-- [Setting SameSite](#setting-samesite)
-- [Setting Options](#setting-options)
+- [meplato/csrf](#meplatocsrf)
+  - [Contents](#contents)
+  - [Install](#install)
+  - [Examples](#examples)
+    - [HTML Forms](#html-forms)
+    - [JavaScript Applications](#javascript-applications)
+    - [Google App Engine](#google-app-engine)
+    - [Setting SameSite](#setting-samesite)
+    - [Cookie path](#cookie-path)
+    - [Setting Options](#setting-options)
+  - [Design Notes](#design-notes)
+  - [License](#license)
 
-gorilla/csrf is easy to use: add the middleware to your router with
+meplato/csrf is easy to use: add the middleware to your router with
 the below:
 
 ```go
@@ -82,7 +89,7 @@ Note that the authentication key passed to `csrf.Protect([]byte(key))` should:
 Generating a random key won't allow you to authenticate existing cookies and will break your CSRF
 validation.
 
-gorilla/csrf inspects the HTTP headers (first) and form body (second) on
+meplato/csrf inspects the HTTP headers (first) and form body (second) on
 subsequent POST/PUT/PATCH/DELETE/etc. requests for the token.
 
 ### HTML Forms
@@ -96,7 +103,7 @@ package main
 import (
     "net/http"
 
-    "github.com/gorilla/csrf"
+    "github.com/meplato/csrf"
     "github.com/gorilla/mux"
 )
 
@@ -160,7 +167,7 @@ as we don't handle any POST/PUT/DELETE requests with our top-level router.
 package main
 
 import (
-    "github.com/gorilla/csrf"
+    "github.com/meplato/csrf"
     "github.com/gorilla/mux"
 )
 
@@ -229,7 +236,7 @@ feature to allow the host of your JavaScript application to make requests to you
 package main
 
 import (
-    "github.com/gorilla/csrf"
+    "github.com/meplato/csrf"
     "github.com/gorilla/mux"
 )
 
@@ -269,7 +276,7 @@ On the example above, you're authorizing requests from `ui.domain.com` to make v
 If you're using [Google App
 Engine](https://cloud.google.com/appengine/docs/go/how-requests-are-handled#Go_Requests_and_HTTP),
 (first-generation) which doesn't allow you to hook into the default `http.ServeMux` directly,
-you can still use gorilla/csrf (and gorilla/mux):
+you can still use meplato/csrf (and gorilla/mux):
 
 ```go
 package app
@@ -332,7 +339,7 @@ You might want to set up a root path for all the cookies; that way, the CSRF wil
 
 What about providing your own error handler and changing the HTTP header the
 package inspects on requests? (i.e. an existing API you're porting to Go). Well,
-gorilla/csrf provides options for changing these as you see fit:
+meplato/csrf provides options for changing these as you see fit:
 
 ```go
 func main() {

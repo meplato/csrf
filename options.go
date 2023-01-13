@@ -2,6 +2,7 @@ package csrf
 
 import (
 	"net/http"
+	"net/url"
 )
 
 // Option describes a functional option for configuring the CSRF handler.
@@ -37,6 +38,14 @@ func Domain(domain string) Option {
 func Path(p string) Option {
 	return func(cs *csrf) {
 		cs.opts.Path = p
+	}
+}
+
+// ExcludePaths sets the prefixes of paths that are excluded from CSRF protection.
+// Defaults to empty.
+func ExcludePaths(paths ...string) Option {
+	return func(cs *csrf) {
+		cs.opts.ExcludePaths = paths
 	}
 }
 
@@ -128,6 +137,18 @@ func CookieName(name string) Option {
 func TrustedOrigins(origins []string) Option {
 	return func(cs *csrf) {
 		cs.opts.TrustedOrigins = origins
+	}
+}
+
+// TrustedOriginsCallbackFunc is a callback function that is used in TrustedOriginsCallback.
+type TrustedOriginsCallbackFunc func(referer *url.URL, r *http.Request) bool
+
+// TrustedOriginsCallback configures a callback function that is called to
+// determine whether the origin (Referer) of the request is trusted. You can
+// use this to e.g. check the origin against a database of trusted origins.
+func TrustedOriginsCallback(f TrustedOriginsCallbackFunc) Option {
+	return func(cs *csrf) {
+		cs.opts.TrustedOriginsCallback = f
 	}
 }
 

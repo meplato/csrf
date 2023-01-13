@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gorilla/securecookie"
 )
@@ -14,17 +15,17 @@ const tokenLength = 32
 
 // Context/session keys & prefixes
 const (
-	tokenKey     string = "gorilla.csrf.Token"
-	formKey      string = "gorilla.csrf.Form"
-	errorKey     string = "gorilla.csrf.Error"
-	skipCheckKey string = "gorilla.csrf.Skip"
+	tokenKey            = contextKey("gorilla.csrf.Token")
+	formKey             = contextKey("gorilla.csrf.Form")
+	errorKey            = contextKey("gorilla.csrf.Error")
+	skipCheckKey        = contextKey("gorilla.csrf.Skip")
 	cookieName   string = "_gorilla_csrf"
 	errorPrefix  string = "gorilla/csrf: "
 )
 
 var (
 	// The name value used in form fields.
-	fieldName = tokenKey
+	fieldName = string(tokenKey)
 	// defaultAge sets the default MaxAge for cookies.
 	defaultAge = 3600 * 12
 	// The default HTTP request header to inspect
@@ -80,19 +81,21 @@ type csrf struct {
 
 // options contains the optional settings for the CSRF middleware.
 type options struct {
-	MaxAge int
-	Domain string
-	Path   string
+	MaxAge       int
+	Domain       string
+	Path         string
+	ExcludePaths []string
 	// Note that the function and field names match the case of the associated
 	// http.Cookie field instead of the "correct" HTTPOnly name that golint suggests.
-	HttpOnly       bool
-	Secure         bool
-	SameSite       SameSiteMode
-	RequestHeader  string
-	FieldName      string
-	ErrorHandler   http.Handler
-	CookieName     string
-	TrustedOrigins []string
+	HttpOnly               bool
+	Secure                 bool
+	SameSite               SameSiteMode
+	RequestHeader          string
+	FieldName              string
+	ErrorHandler           http.Handler
+	CookieName             string
+	TrustedOrigins         []string
+	TrustedOriginsCallback TrustedOriginsCallbackFunc
 }
 
 // Protect is HTTP middleware that provides Cross-Site Request Forgery
@@ -107,6 +110,7 @@ type options struct {
 // 'Forbidden' error response.
 //
 // Example:
+//
 //	package main
 //
 //	import (
@@ -143,7 +147,6 @@ type options struct {
 //		// This is useful if you're sending JSON to clients or a front-end JavaScript
 //		// framework.
 //	}
-//
 func Protect(authKey []byte, opts ...Option) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		cs := parseOptions(h, opts...)
@@ -209,6 +212,14 @@ func (cs *csrf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Skip the check if the path prefix is excluded.
+	for _, prefix := range cs.opts.ExcludePaths {
+		if strings.HasPrefix(r.URL.Path, prefix) {
+			cs.h.ServeHTTP(w, r)
+			return
+		}
+	}
+
 	// Retrieve the token from the session.
 	// An error represents either a cookie that failed HMAC validation
 	// or that doesn't exist.
@@ -255,8 +266,10 @@ func (cs *csrf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			// Check exact match against the referer
 			valid := sameOrigin(r.URL, referer)
 
+			// Check exact match against trusted origins
 			if !valid {
 				for _, trustedOrigin := range cs.opts.TrustedOrigins {
 					if referer.Host == trustedOrigin {
@@ -266,7 +279,14 @@ func (cs *csrf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if valid == false {
+			// Use a callback function to check the referer if the origin check
+			if !valid {
+				if cs.opts.TrustedOriginsCallback != nil {
+					valid = cs.opts.TrustedOriginsCallback(referer, r)
+				}
+			}
+
+			if !valid {
 				r = envError(r, ErrBadReferer)
 				cs.opts.ErrorHandler.ServeHTTP(w, r)
 				return
@@ -311,8 +331,20 @@ func (cs *csrf) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // unauthorizedhandler sets a HTTP 403 Forbidden status and writes the
 // CSRF failure reason to the response.
 func unauthorizedHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, fmt.Sprintf("%s - %s",
-		http.StatusText(http.StatusForbidden), FailureReason(r)),
-		http.StatusForbidden)
-	return
+	if isXHR(r) {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, `{"code":%d,"message":%q}`, http.StatusForbidden, FailureReason(r))
+		return
+	}
+	http.Error(
+		w,
+		fmt.Sprintf("%s - %s", http.StatusText(http.StatusForbidden), FailureReason(r)),
+		http.StatusForbidden,
+	)
+}
+
+// isXHR returns true if r is an XHR request. It inspects the
+// Content-Type header for that.
+func isXHR(r *http.Request) bool {
+	return strings.HasPrefix(r.Header.Get("Content-Type"), "application/json")
 }

@@ -1,5 +1,7 @@
-module github.com/gorilla/csrf
+module github.com/meplato/csrf
 
 require github.com/gorilla/securecookie v1.1.1
 
-go 1.13
+require github.com/gorilla/mux v1.8.0 // indirect
+
+go 1.18

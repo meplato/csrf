@@ -1,5 +1,5 @@
 /*
-Package csrf (gorilla/csrf) provides Cross Site Request Forgery (CSRF)
+Package csrf (meplato/csrf) provides Cross Site Request Forgery (CSRF)
 prevention middleware for Go web applications & services.
 
 It includes:
@@ -14,14 +14,14 @@ whether that be a HTML form or a JSON response body.
 templates to replace a `{{ .csrfField }}` template tag with a hidden input
 field.
 
-gorilla/csrf is easy to use: add the middleware to individual handlers with
+meplato/csrf is easy to use: add the middleware to individual handlers with
 the below:
 
-    CSRF := csrf.Protect([]byte("32-byte-long-auth-key"))
-    http.HandlerFunc("/route", CSRF(YourHandler))
+	CSRF := csrf.Protect([]byte("32-byte-long-auth-key"))
+	http.HandlerFunc("/route", CSRF(YourHandler))
 
 ... and then collect the token with `csrf.Token(r)` before passing it to the
-template, JSON body or HTTP header (you pick!). gorilla/csrf inspects the form body
+template, JSON body or HTTP header (you pick!). meplato/csrf inspects the form body
 (first) and HTTP headers (second) on subsequent POST/PUT/PATCH/DELETE/etc. requests
 for the token.
 
@@ -40,7 +40,7 @@ in order to protect malicious POST requests being made:
 		"html/template"
 		"net/http"
 
-		"github.com/gorilla/csrf"
+		"github.com/meplato/csrf"
 		"github.com/gorilla/mux"
 	)
 
@@ -109,7 +109,7 @@ providing a JSON API:
 	package main
 
 	import (
-		"github.com/gorilla/csrf"
+		"github.com/meplato/csrf"
 		"github.com/gorilla/mux"
 	)
 
@@ -171,6 +171,5 @@ important.
 and the one-time-pad used for masking them.
 
 This library does not seek to be adventurous.
-
 */
 package csrf
